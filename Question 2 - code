@@ -1,0 +1,22 @@
+for (y_col in y_cols) {
+  # Extract the x and y columns
+  x <- df[[x_col]]
+  y <- df[[y_col]]
+  
+  # Fit a linear regression model
+  model <- lm(y ~ x)
+  
+  # Extract the model summary statistics
+  f_statistic <- summary(model)$f statistic[1]
+  t_statistic <- summary(model)$coefficients["x", "t value"]
+  p_value <- summary(model)$coefficients["x", "Pr(>|t|)"]
+  
+  # Create a new dataframe with the results
+  new_row <- data.frame(x = x_col, y = y_col, F_statistic = f_statistic, t_test = t_statistic, p_value = p_value)
+  
+  # Append the new row to the results dataframe
+  results_df <- rbind(results_df, new_row)
+}
+
+# Print the results dataframe
+print(results_df)

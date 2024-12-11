@@ -1,6 +1,6 @@
 ##Question 3 - code
 
-```python
+```ruby
 
 # clean environment
 rm(list = ls())

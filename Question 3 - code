@@ -1,0 +1,689 @@
+##Question 3 - code
+
+# clean environment
+rm(list = ls())
+# Global toggles 
+
+#toggle for which is baseline model
+b = 1 #(GDP only used as baseline model in final analysis)
+
+# how much of data set to hold back to test prediction
+hold = 0 # (no holdout data used in final analysis)
+
+# number of lag dependent variables (LDV) used as regressors 
+LDV_used = 0 # (no use of LDV in final analysis)
+# Read in data 
+
+# Read in data - Cleaned Quarterly Seasonally Adjusted
+path = "C:/Users/suetb/OneDrive/MSDS_UW/Data557/Project/CleanedData/AdjustedSalesDataQuartlerly.csv"
+
+# Convert sales data into $B
+ASD_Q <- read.csv(file = path)
+names(ASD_Q)[1] = "Quarter"
+ASD_Q[sapply(ASD_Q, is.numeric)] = ASD_Q[sapply(ASD_Q, is.numeric)] / 1000
+
+
+#View(ASD_Q)
+
+# Read in quarterly GDP Data 
+path = "C:/Users/suetb/OneDrive/MSDS_UW/Data557/Project/CleanedData/GDP_Quartlerly.csv"
+GDP_Q <- read.csv(file = path)
+names(GDP_Q)[1] = "Quarter"
+#View(GDP_Q)
+
+# Read in quarterly recession indicator data  
+library(readxl)
+pathname = "C:/Users/suetb/OneDrive/MSDS_UW/Data557/Project/USRECQ.xls"
+rangename = "A11:B134"
+USREC_Q = read_excel(path = pathname,  range = rangename)
+#View(USREC_Q)
+#sum(USREC_Q$USRECQ)
+#create a COVID indicator variable by quarter
+Cov = replicate(123,0)
+Cov[114:114] = 1
+# Create Lagged Seasonally Adjusted Data
+# Note: not used in final analysis 
+ASD_Q_Lag1 = ASD_Q[2:nrow(ASD_Q), ]
+
+for (i in 2:ncol(ASD_Q)){
+  ASD_Q_Lag1[,i] = ASD_Q[1:nrow(ASD_Q)-1,i]
+  names(ASD_Q_Lag1)[i] = paste("Lagged", names(ASD_Q)[i])
+}
+
+# View(ASD_Q_Lag1)
+# Create Data frame of predictor values
+# Convert GDP into $T 
+n = nrow(ASD_Q)
+begin = 1+LDV_used
+x1 = GDP_Q$GDP[begin:n]/1000
+x2 = GDP_Q$PercentChange[begin:n]
+x3 = begin:n   # time variable 
+x4 = Cov[begin:n]  #COVID Variable 
+x5 = USREC_Q$USRECQ[begin:n]
+Xall = as.data.frame(cbind(x1, x2, x3, x4, x5))
+names(Xall) = c("GDP", "PerChange", "Time", "Covid", "Recession")
+row.names(Xall) = ASD_Q$Quarter[begin:n]
+#View(Xall)
+#Segregate into test and holdout data 
+n = nrow(Xall)
+X = Xall[1:(n-hold),]
+
+if (hold !=0) {
+Xhold = Xall[(n-hold+1):n, ] 
+} 
+
+#View(X)
+# View(Xhold)
+# Create table of model names and predictors to use 
+
+
+#Create empty data frame with 0 rows and 8 columns
+models = data.frame(matrix(ncol = 8, nrow = 0))
+
+#provide column names
+names(models) = c("modelNumber", "modelName", "PredictGDP", "PredictLag", "PredictCovid", "PredictTime", "PredictPerChange", "PredictRecession")
+
+# function to append new model 
+addModel = function(P_GDP, P_Lag, P_Covid, P_Time, P_PerChg, P_Rec) {
+  num = nrow(models) + 1
+  name = ""   
+  
+  if (P_Lag == 1) {
+    name = paste(name, "Lag,")
+  }
+  
+   if(P_GDP == 1) {
+    name = paste(name, "GDP,")
+  }
+ 
+  if (P_Covid == 1) {
+    name = paste(name, "Covid,")
+  }
+
+  if (P_Time == 1) {
+    name = paste(name, "Time,")
+  }
+  if (P_PerChg == 1) {
+    name = paste(name, "PerChange,")
+  }
+  if (P_Rec == 1) {
+    name = paste(name, "& Recession")
+  }
+  new_dat = c(num, name, P_GDP, P_Lag, P_Covid, P_Time, P_PerChg, P_Rec)
+  models[num,] = new_dat
+  return(models)
+}
+
+for (r in 1:1) { # all models include GDP
+  for (q in 0:0) { # no lagged variable used in final anal
+    for (i in 0:1) {
+      for (j in 0:1) {
+        for (k in 0:1) {
+          for (l in 0:1) {
+          models = addModel(r, q, i, j, k, l)
+}
+}
+}
+}
+}
+}  
+
+# for (r in 1:1) {
+#   for (q in 0:0) {
+#     for (i in 0:1) {
+#       for (j in 0:1) {
+#         for (k in 0:1) {
+#           for (l in 0:1) {
+#           models = addModel(r, q, i, j, k, l)
+# }
+# }
+# }
+# }
+# }
+# }
+
+#View(models)
+newModel = function(y, mo_num) {
+n = length(y)-hold
+#datay = cbind(y,X[,1:5])
+
+lagy = y[1:(n-(begin-1))]
+y = y[(1+begin-1):n] # drop first values of y for equal size data if using LDVs (note: no LDVs in final analysis)
+datay = cbind(y,X[,1:5],lagy) 
+names(datay)[7] = "Lagged_Sales"
+  
+
+# Create string based on model number 
+  
+if (models$PredictGDP[mo_num] == 1 && models$PredictLag[mo_num] == 1) {
+  formula_str = "y ~ GDP +Lagged_Sales"
+} else if (models$PredictGDP[mo_num] == 1 && models$PredictLag[mo_num] == 0) {
+  formula_str = "y ~ GDP"
+} else {
+  formula_str = "y ~ Lagged_Sales"
+} 
+  
+if (models$PredictCovid[mo_num] == 1) {
+formula_str  = paste(formula_str, "+", "Covid")
+}
+if (models$PredictTime[mo_num] == 1) {
+formula_str  = paste(formula_str, "+", "Time")
+}
+if (models$PredictPerChange[mo_num] == 1) {
+formula_str  = paste(formula_str, "+", "PerChange")
+}
+
+if (models$PredictRecession[mo_num] == 1) {
+formula_str  = paste(formula_str, "+", "Recession")
+}
+
+formula_str
+
+formula_obj <- as.formula(formula_str)
+new = lm(formula_obj, data = datay)
+
+
+ return(new)  
+  
+}
+# Function that takes a parameter y (typically $spending in a particular category) and determines the adjusted R2 of each of the  linear regression models defined above  
+
+
+calc_R2 = function(y) {
+num = length(models$modelName)
+AdjR2 = rep(500, num) #placeholder variable with "500" as dummy till filled
+for (i in 1:num) {
+nextModel = newModel(y,i)
+#print(summary(nextModel))
+AdjR2[i] = summary(nextModel)$adj.r.squared
+}    
+return(AdjR2)
+}
+#Calculate Adj R2 across all models for all categories of interest 
+
+y = ASD_Q[,2]
+AdjR2All = as.data.frame(calc_R2(y))
+row.names(AdjR2All) = models$modelName
+names(AdjR2All) = names(ASD_Q)[2] 
+
+for (i in 3:22) {
+  y = ASD_Q[,i]
+  AdjR2All = cbind(AdjR2All, calc_R2(y))
+  names(AdjR2All)[i-1] = names(ASD_Q)[i]
+}
+
+# Omit columns 23, 24 (Jewelry and Mens Clothing)
+for (i in 25:29) {
+  y = ASD_Q[,i]
+  AdjR2All = cbind(AdjR2All, calc_R2(y))
+  names(AdjR2All)[i-3] = names(ASD_Q)[i]
+}
+
+
+
+# Omit "total columns" 30 - 37
+
+for (i in 36:39) {
+  y = ASD_Q[,i]
+  AdjR2All = cbind(AdjR2All, calc_R2(y))
+  names(AdjR2All)[i-9] = names(ASD_Q)[i]
+}
+
+#View(AdjR2All)
+write.csv(AdjR2All, "A_AdjustedRSquares.csv")
+# Select best model for each category based on best Adjusted R2; store in a table called "bestModel" that also records the Adjusted R2 from the Best model 
+
+n = ncol(AdjR2All)
+
+bestR2 = max(AdjR2All[,1])
+index = min(which(AdjR2All[,1] == bestR2)) # if tie, take lower # model 
+baselineR2 = AdjR2All[b,1]  #Use lag as baseline 
+diffR2 = round(bestR2 - baselineR2, 4)
+perDiffR2 = round(diffR2/baselineR2, 4)
+bestModel = as.data.frame(c(index, row.names(AdjR2All)[index], round(bestR2, 4), round(baselineR2, 4), diffR2, perDiffR2 )) 
+names(bestModel) = names(AdjR2All)[1]
+row.names(bestModel) = c("Best Model Index", "Best Model Name", "Best Model Adjusted R2 Value", "Baseline Adjusted R2 Value", "Diff in R2", "% Diff in R2")
+
+for (i in 2:n) {
+bestR2 = max(AdjR2All[,i])
+index = min(which(AdjR2All[,i] == bestR2)) # if tie take lower #
+baselineR2 = AdjR2All[b,i]
+diffR2 = round(bestR2 - baselineR2, 4)
+perDiffR2 = round(diffR2/baselineR2, 4)
+newData = as.data.frame(c(index, row.names(AdjR2All)[index], round(bestR2, 4), round(baselineR2, 4),diffR2, perDiffR2)) 
+bestModel = cbind(bestModel, newData)
+names(bestModel)[i] = names(AdjR2All)[i]
+}
+
+
+
+#View(bestModel)
+# for each category of spending, test the null hypothesis that all of the coefficients other than GDP in the best model are zero under constant variance, and robust variance 
+
+library(lmtest)
+## Loading required package: zoo
+## 
+## Attaching package: 'zoo'
+## The following objects are masked from 'package:base':
+## 
+##     as.Date, as.Date.numeric
+library(sandwich)
+
+n=ncol(AdjR2All)
+
+pValues = rep(500, n) #placeholder with dummy value "500"
+wtest = rep(600, n)#placeholder with dummy value "600"
+wtest_robust = rep(700, n)#placeholder with dummy value "700"
+wtest_robust_C = rep(800, n)#placeholder with dummy value "800"
+
+for (i in 1:n) {
+
+nameY = names(bestModel)[i]
+y = ASD_Q[[nameY]]
+
+
+modelreduced = newModel(y, b) #b=1 GDP is baseline, b=33 lag is baseline
+modelreduced
+
+# select best model
+num = as.numeric(bestModel[1,i])
+
+# use best model as modelfull 
+modelfull = newModel(y, num)
+
+# record p values using anova 
+anova_result = anova(modelreduced, modelfull)
+pValues[i] = anova_result[2, "Pr(>F)"]
+
+# record p values using wald test 
+waldt = waldtest(modelreduced, modelfull, test="F")
+wtest[i] = waldt$`Pr(>F)`[2]
+  
+# record p values using wald test robust variance  
+waldt_robust = waldtest(modelreduced, modelfull, vcov = vcovHC(modelfull, type="HC0"))
+wtest_robust[i] = waldt_robust$`Pr(>F)`[2]
+
+
+# record p values using wald test robust variance and Chisquare test 
+waldt_robust_C = waldtest(modelreduced, modelfull, test = "Chisq", vcov = vcovHC(modelfull, type ="HC0"))
+wtest_robust_C[i] = waldt_robust_C$`Pr(>Chisq)`[2]
+
+}
+
+
+
+bestModel2 = rbind(bestModel, pValues, wtest, wtest_robust, wtest_robust_C)
+row.names(bestModel2) = c(row.names(bestModel), "p-value anova", "p-value Wald constant", "p-value Wald robust", "p-value Wald robust Chisq test")
+#View(bestModel2)
+write.csv(bestModel2, "A_ResultsQ3.csv")
+# tabulate how many times each model selected as having best Adjusted R2
+n = length(models$modelName)
+count = rep(500, n) # dummy value of 500 to be filled in 
+for (i in 1:n){
+count[i] = length(which(bestModel2[2, ] == models$modelName[i])) 
+   }
+
+df = as.data.frame(cbind(models$modelName, as.numeric(count)))
+names(df) = c("Model Names", "Frequency Selected")
+tbl = df[which(df$`Frequency Selected` != 0), ]
+#tbl
+write.csv(tbl, "A_SelectedBestModel")
+#Export results to create graphs/tables in Final Report 
+
+#Data to create charts of Baseline Model Results - Women's Clothing & HPC 
+# Convert data in to $B for sales and $T for GDP 
+
+WC=ASD_Q$Women.s.clothing.stores
+HPC = ASD_Q$Health.and.personal.care.stores
+
+bl_data = as.data.frame(cbind(WC, HPC, Xall$GDP))
+names(bl_data) = c("Women's Clothing Sales ($B)", "HPC Sales ($B)", "GDP($T)")
+row.names(bl_data) = row.names(Xall)
+
+#View(bl_data)
+write.csv(bl_data, "A_bldata")
+# Function to extract/print/plot detailed results and visual diagnostics for a given category of data 
+
+library(tidyverse)
+## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
+## ✔ ggplot2 3.4.0      ✔ purrr   1.0.1 
+## ✔ tibble  3.1.8      ✔ dplyr   1.0.10
+## ✔ tidyr   1.2.1      ✔ stringr 1.5.0 
+## ✔ readr   2.1.3      ✔ forcats 0.5.2 
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()
+library(car)
+## Loading required package: carData
+## 
+## Attaching package: 'car'
+## 
+## The following object is masked from 'package:dplyr':
+## 
+##     recode
+## 
+## The following object is masked from 'package:purrr':
+## 
+##     some
+# function needs to be given index of category in table ASD_Q
+describeOne = function(z) {
+
+j  = z
+y = ASD_Q[, j]
+nameY = names(ASD_Q)[j]
+oneResult = as.data.frame(bestModel2[[nameY]])
+
+
+names(oneResult) = nameY
+row.names(oneResult) = row.names(bestModel2)
+print(oneResult)
+
+baseline=newModel(y, b) # (b=1) baseline is GDP only 
+print(summary(baseline))
+print(round(confint(baseline), 3))
+
+print("Now let's look at Robust Variance")
+v = vcovHC(baseline, type="HC0")
+print(round(coeftest(baseline, vcov=v),3))
+#print(round(confint(baseline, vcov = v),3))
+
+
+num=as.numeric(oneResult[1,1])
+num
+best = newModel(y, num)
+print(summary(best))
+print(round(confint(best), 3))
+print("Now let's look at Robust Variance")
+v = vcovHC(best, type="HC0")
+print(round(coeftest(best, vcov=v),3))
+#print(round(confint(best, vcov=v), 3))
+
+
+
+
+shortName = paste(substr(nameY, 1, 8), "...")
+qqnorm(baseline$residuals, main = paste("QQ Plot of residuals, Baseline Model for", shortName))
+qqline(baseline$residuals)
+qqnorm(best$residuals, main = paste("QQ Plot of residuals, Best Model for", shortName))
+qqline(best$residuals)
+
+#Check autocorrelation of residuals 
+acf(baseline$residuals, main = paste("ACF Residuals, Baseline Model for", shortName))
+acf(best$residuals, main = paste("ACF Residuals, Best Model for", shortName))
+}
+#describeOne(3) # ASD_Q(3) = Auto & MV 
+#describeOne(4) #ASD_Q(4) = Auto Parts & Tires  
+#describeOne(16) #ASD_Q(16) = Furniture & Home Furnishing 
+describeOne(22) #ASD_Q(22) = Health and Peronal Care  
+##                                Health.and.personal.care.stores
+## Best Model Index                                            14
+## Best Model Name                  GDP, Covid, Time, & Recession
+## Best Model Adjusted R2 Value                            0.9959
+## Baseline Adjusted R2 Value                              0.9878
+## Diff in R2                                              0.0081
+## % Diff in R2                                            0.0082
+## p-value anova                             2.37657414975469e-28
+## p-value Wald constant                     2.37657414975472e-28
+## p-value Wald robust                       1.68672971678731e-31
+## p-value Wald robust Chisq test            4.66336681266855e-62
+## 
+## Call:
+## lm(formula = formula_obj, data = datay)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -7.7462 -1.5392  0.0306  1.4238  5.1187 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept) -6.10668    0.67243  -9.082 2.48e-15 ***
+## GDP          4.47345    0.04501  99.378  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 2.51 on 121 degrees of freedom
+## Multiple R-squared:  0.9879, Adjusted R-squared:  0.9878 
+## F-statistic:  9876 on 1 and 121 DF,  p-value: < 2.2e-16
+## 
+##              2.5 % 97.5 %
+## (Intercept) -7.438 -4.775
+## GDP          4.384  4.563
+## [1] "Now let's look at Robust Variance"
+## 
+## t test of coefficients:
+## 
+##             Estimate Std. Error t value  Pr(>|t|)    
+## (Intercept)   -6.107      0.770  -7.936 < 2.2e-16 ***
+## GDP            4.473      0.059  75.954 < 2.2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## 
+## Call:
+## lm(formula = formula_obj, data = datay)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -3.917 -1.210  0.000  1.135  3.067 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)  9.13856    1.09291   8.362 1.42e-13 ***
+## GDP          1.51809    0.19764   7.681 5.10e-12 ***
+## Covid       -7.34901    1.57294  -4.672 7.97e-06 ***
+## Time         0.42391    0.02809  15.090  < 2e-16 ***
+## Recession    1.16897    0.48250   2.423   0.0169 *  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 1.458 on 118 degrees of freedom
+## Multiple R-squared:  0.996,  Adjusted R-squared:  0.9959 
+## F-statistic:  7377 on 4 and 118 DF,  p-value: < 2.2e-16
+## 
+##               2.5 % 97.5 %
+## (Intercept)   6.974 11.303
+## GDP           1.127  1.909
+## Covid       -10.464 -4.234
+## Time          0.368  0.480
+## Recession     0.213  2.124
+## [1] "Now let's look at Robust Variance"
+## 
+## t test of coefficients:
+## 
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)    9.139      1.011   9.038   <2e-16 ***
+## GDP            1.518      0.184   8.266   <2e-16 ***
+## Covid         -7.349      0.504 -14.583   <2e-16 ***
+## Time           0.424      0.026  16.128   <2e-16 ***
+## Recession      1.169      0.363   3.216    0.002 ** 
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+describeOne(39) #ASD_Q(39) = Women's Clothing 
+##                                                  Women.s.clothing.stores
+## Best Model Index                                                      16
+## Best Model Name                 GDP, Covid, Time, PerChange, & Recession
+## Best Model Adjusted R2 Value                                      0.7094
+## Baseline Adjusted R2 Value                                        0.4665
+## Diff in R2                                                        0.2429
+## % Diff in R2                                                      0.5207
+## p-value anova                                       1.47433792071477e-15
+## p-value Wald constant                               1.47433792071475e-15
+## p-value Wald robust                                 1.87149848205177e-94
+## p-value Wald robust Chisq test                                         0
+## 
+## Call:
+## lm(formula = formula_obj, data = datay)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -5.9771 -0.4948  0.1018  0.5962  1.4619 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)  6.44578    0.24534   26.27   <2e-16 ***
+## GDP          0.17041    0.01642   10.38   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.9157 on 121 degrees of freedom
+## Multiple R-squared:  0.4708, Adjusted R-squared:  0.4665 
+## F-statistic: 107.7 on 1 and 121 DF,  p-value: < 2.2e-16
+## 
+##             2.5 % 97.5 %
+## (Intercept) 5.960  6.932
+## GDP         0.138  0.203
+## [1] "Now let's look at Robust Variance"
+## 
+## t test of coefficients:
+## 
+##             Estimate Std. Error t value  Pr(>|t|)    
+## (Intercept)    6.446      0.207  31.198 < 2.2e-16 ***
+## GDP            0.170      0.017   9.994 < 2.2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## 
+## Call:
+## lm(formula = formula_obj, data = datay)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -2.13737 -0.47684 -0.00452  0.59075  1.44711 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)   7.97473    0.51002  15.636  < 2e-16 ***
+## GDP          -0.07750    0.09573  -0.810  0.41981    
+## Covid        -8.48809    0.93017  -9.125 2.49e-15 ***
+## Time          0.03771    0.01357   2.780  0.00634 ** 
+## PerChange   -23.00011    7.08297  -3.247  0.00152 ** 
+## Recession    -0.47902    0.24536  -1.952  0.05329 .  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.6758 on 117 degrees of freedom
+## Multiple R-squared:  0.7213, Adjusted R-squared:  0.7094 
+## F-statistic: 60.56 on 5 and 117 DF,  p-value: < 2.2e-16
+## 
+##               2.5 % 97.5 %
+## (Intercept)   6.965  8.985
+## GDP          -0.267  0.112
+## Covid       -10.330 -6.646
+## Time          0.011  0.065
+## PerChange   -37.028 -8.973
+## Recession    -0.965  0.007
+## [1] "Now let's look at Robust Variance"
+## 
+## t test of coefficients:
+## 
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)    7.975      0.327  24.368   <2e-16 ***
+## GDP           -0.078      0.062  -1.240    0.217    
+## Covid         -8.488      0.548 -15.501   <2e-16 ***
+## Time           0.038      0.009   4.136   <2e-16 ***
+## PerChange    -23.000      5.023  -4.579   <2e-16 ***
+## Recession     -0.479      0.294  -1.631    0.106    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+# Analyze P-Val of Percent Change and Rec Indicators 
+
+
+# Initialize storage vecs w/ dummy variables 
+n = ncol(bestModel2)
+pval_Rec = rep(100, n) # 100 as placeholder val to be replaced
+pval_Rec_rob = rep(150,n)
+pval_Rec_bon = rep(200, n) # 200 as placeholder val to be replaced
+pval_PerChange = rep(300, n) # 300 as placeholder val to be replaced
+pval_PerChange_rob = rep(350,n)
+pval_PerChange_bon = rep(400, n) # 400 as placeholder val to be replaced
+
+
+for(i in 1:n) {  
+
+nameY = names(bestModel2)[i]
+y = ASD_Q[[nameY]]
+num = as.numeric(bestModel2[1,i])
+best = newModel(y, num)
+v = vcovHC(best, type="HC0")
+
+
+if (num %% 2 == 1) { # model does not include recession
+  pval_Rec[i] = NA
+  pval_Rec_rob[i] = NA
+  pval_Rec_bon[i] = NA
+} else {
+  rec_row_index = which(row.names(summary(best)$coefficients) == "Recession")
+  pval_Rec[i] = summary(best)$coefficients[rec_row_index, 4]
+  pval_Rec_rob[i] = coeftest(best, vcov=v)[rec_row_index, 4]
+  bon = nrow(summary(best)$coefficients) -1 # bonferroni correction
+  pval_Rec_bon[i] = pval_Rec_rob[i]*bon
+}
+
+noPer = c(1:2, 5:6, 9:10, 13:14)
+if (num %in% noPer) {# model does not include Per Change GDP
+  pval_PerChange[i] = NA
+  pval_PerChange_rob[i] = NA
+  pval_PerChange_bon[i] = NA
+} else {
+  pc_row_index =which(row.names(summary(best)$coefficients) == "PerChange")
+  pval_PerChange[i] = summary(best)$coefficients[pc_row_index, 4]
+  pval_PerChange_rob[i] = coeftest(best, vcov=v)[pc_row_index, 4]
+  bon = nrow(summary(best)$coefficients) -1 # bonferroni correction
+  pval_PerChange_bon[i]= pval_PerChange_rob[i]*bon
+  }
+
+}
+
+
+p_indiv = as.data.frame(cbind(names(bestModel2), round(pval_Rec, 4), round(pval_Rec_rob,4), round(pval_Rec_bon, 4), round(pval_PerChange,4), round(pval_PerChange_rob, 4), round(pval_PerChange_bon, 4)))
+                            
+names(p_indiv) = c("Category", "Pval Rec.", "Pval Rec Robust", "Pval Rec. w/ Bon Adj.", "Pval PerChg GDP", "Pval PerChg Robust", "Pval PerChg GDP w/ Bon Adj.") 
+
+#View(p_indiv)
+
+subset7 = c(2, 19, 21, 23, 25, 26, 30) # Spending categories that were statistically significant in both Q1 and Q2 
+p_indiv_sub = p_indiv[subset7,]
+View(p_indiv_sub)
+write.csv(p_indiv_sub, "Pvalues")
+# Test predictive power of model 
+
+j = 30
+lev =.9
+n=nrow(ASD_Q)
+
+if (hold !=0) {
+
+nameY = names(bestModel2)[j]
+y = ASD_Q[[nameY]]
+y_actual = y[(n-hold+1):n]
+print(nameY)
+print(y_actual)
+
+modelreduced = newModel(y, b)
+# select best model
+num = as.numeric(bestModel2[1,j])
+# use best model as modelfull 
+modelfull = newModel(y, num)
+
+
+
+# predict the holdout quarters baseline (reduced) model
+Lagged_Sales_hold = y[(n-hold):(n-1)]
+#ASD_Q_Lag1[[paste("Lagged",nameY)]]
+pr = predict(modelreduced, newdata = data.frame(Lagged_Sales = Lagged_Sales_hold ), interval = "prediction", level = lev )
+results = as.data.frame(cbind(y_actual, round(pr,0)))
+names(results)[2:4] = paste("Baseline", names(results)[2:4])
+
+# predict the holdout quarters based on best model
+df = cbind(Xhold[1:5], Lagged_Sales_hold)
+names(df)[6] = "Lagged_Sales"
+pf = predict(modelfull, newdata = df, interval = "prediction", level = lev)
+results = cbind(results, round(pf,0))
+names(results)[5:7] = paste("Best", c("Fit", "Lower", "Upper"))
+
+}
+
+#results
+#write.csv(results, "PredictionWC20.csv")

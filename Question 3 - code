@@ -1,6 +1,4 @@
-##Question 3 - code
-
-<code style="color : name_color">text</code>
+###Question 3 - code
 
 # clean environment
 rm(list = ls())

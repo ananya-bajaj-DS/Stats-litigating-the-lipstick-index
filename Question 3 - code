@@ -1,5 +1,5 @@
 ##Question 3 - code
-``` python
+```python
 # clean environment
 rm(list = ls())
 # Global toggles 

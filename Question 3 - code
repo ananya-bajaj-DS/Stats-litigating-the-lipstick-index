@@ -1,6 +1,6 @@
 ##Question 3 - code
 
-```ruby
+<code style="color : name_color">text</code>
 
 # clean environment
 rm(list = ls())
@@ -9,7 +9,6 @@ rm(list = ls())
 #toggle for which is baseline model
 b = 1 #(GDP only used as baseline model in final analysis)
 
-```
 # how much of data set to hold back to test prediction
 hold = 0 # (no holdout data used in final analysis)
 

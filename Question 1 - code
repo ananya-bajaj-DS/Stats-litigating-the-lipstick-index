@@ -1,0 +1,155 @@
+library(readxl)
+
+mSales = read_excel("Percent of Retail and Food (Monthly).xlsx")
+mSales$USREC = ifelse(mSales$USREC == 1, "Yes", "No")
+
+# All other gen. merchandise stores 1
+t.test(`All other gen. merchandise stores` ~ USREC, data = mSales)
+boxplot(mSales$`All other gen. merchandise stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "All other gen. merchandise stores")
+
+# Automobile and other motor vehicle dealers 2
+t.test(`Automobile and other motor vehicle dealers` ~ USREC, data = mSales)
+boxplot(mSales$`Automobile and other motor vehicle dealers` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Automobile and other motor vehicle dealers")
+
+# Automotive parts, acc., and tire stores 3
+t.test(`Automotive parts, acc., and tire stores` ~ USREC, data = mSales)
+boxplot(mSales$`Automotive parts, acc., and tire stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Automotive parts, acc., and tire stores")
+
+# Beer, wine and liquor stores 4
+t.test(`Beer, wine and liquor stores` ~ USREC, data = mSales)
+boxplot(mSales$`Beer, wine and liquor stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Beer, wine and liquor stores")
+
+# Building mat. and garden equip. and supplies dealers 5
+t.test(`Building mat. and garden equip. and supplies dealers` ~ USREC, data = mSales)
+boxplot(mSales$`Building mat. and garden equip. and supplies dealers` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Building mat. and garden equip. and supplies dealers")
+
+# Building mat. and supplies dealers 6
+t.test(`Building mat. and supplies dealers` ~ USREC, data = mSales)
+boxplot(mSales$`Building mat. and supplies dealers` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Building mat. and supplies dealers")
+
+# Clothing and clothing access. stores 7
+t.test(`Clothing and clothing access. stores` ~ USREC, data = mSales)
+boxplot(mSales$`Clothing and clothing access. stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Clothing and clothing access. stores")
+
+# Clothing stores 8
+t.test(`Clothing stores` ~ USREC, data = mSales)
+boxplot(mSales$`Clothing stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Clothing stores")
+
+# Department stores 9
+t.test(`Department stores` ~ USREC, data = mSales)
+boxplot(mSales$`Department stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Department stores")
+
+# Electronic shopping and mail order houses 10 
+t.test(`Electronic shopping and mail order houses` ~ USREC, data = mSales)
+boxplot(mSales$`Electronic shopping and mail order houses` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Electronic shopping and mail order houses")
+
+# Electronics and appliance stores 11
+t.test(`Electronics and appliance stores` ~ USREC, data = mSales)
+boxplot(mSales$`Electronics and appliance stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Electronics and appliance stores")
+
+# Food and beverage stores 12
+t.test(`Food and beverage stores` ~ USREC, data = mSales)
+boxplot(mSales$`Food and beverage stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Food and beverage stores")
+
+# Food services and drinking places 13
+t.test(`Food services and drinking places` ~ USREC, data = mSales)
+boxplot(mSales$`Food services and drinking places` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Food services and drinking places")
+
+# Fuel dealers 14
+t.test(`Fuel dealers` ~ USREC, data = mSales)
+boxplot(mSales$`Fuel dealers` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Fuel dealers")
+
+# Furniture and home furnishings stores 15
+t.test(`Furniture and home furnishings stores` ~ USREC, data = mSales)
+boxplot(mSales$`Furniture and home furnishings stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Furniture and home furnishings stores")
+
+# Furniture, home furn, electronics, and appliance stores 16
+t.test(`Furniture, home furn, electronics, and appliance stores` ~ USREC, data = mSales)
+boxplot(mSales$`Furniture, home furn, electronics, and appliance stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Furniture, home furn, electronics, and appliance stores")
+
+# GAFO(1) 17
+t.test(`GAFO(1)` ~ USREC, data = mSales)
+boxplot(mSales$`GAFO(1)` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "GAFO(1)")
+
+# Gasoline stations 18
+t.test(`Gasoline stations` ~ USREC, data = mSales)
+boxplot(mSales$`Gasoline stations` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Gasoline stations")
+
+# General merchandise stores 19
+t.test(`General merchandise stores` ~ USREC, data = mSales)
+boxplot(mSales$`General merchandise stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "General merchandise stores")
+
+# Grocery stores 20
+t.test(`Grocery stores` ~ USREC, data = mSales)
+boxplot(mSales$`Grocery stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Grocery stores")
+
+# Health and personal care stores 21
+t.test(`Health and personal care stores` ~ USREC, data = mSales)
+boxplot(mSales$`Health and personal care stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Health and personal care stores")
+
+# Miscellaneous stores retailers 24
+t.test(`Miscellaneous stores retailers` ~ USREC, data = mSales)
+boxplot(mSales$`Miscellaneous stores retailers` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Miscellaneous stores retailers")
+
+# Motor vehicle and parts dealers 25
+t.test(`Motor vehicle and parts dealers` ~ USREC, data = mSales)
+boxplot(mSales$`Motor vehicle and parts dealers` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Motor vehicle and parts dealers")
+
+# Nonstore retailers 26
+t.test(`Nonstore retailers` ~ USREC, data = mSales)
+boxplot(mSales$`Nonstore retailers` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Nonstore retailers")
+
+# Other general merchandise stores 27
+t.test(`Other general merchandise stores` ~ USREC, data = mSales)
+boxplot(mSales$`Other general merchandise stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Other general merchandise stores")
+
+# Pharmacies and drug stores 28
+t.test(`Pharmacies and drug stores` ~ USREC, data = mSales)
+boxplot(mSales$`Pharmacies and drug stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Pharmacies and drug stores")
+
+# Shoe stores 29
+t.test(`Shoe stores` ~ USREC, data = mSales)
+boxplot(mSales$`Shoe stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Shoe stores")
+
+# Sporting goods, hobby, musical instrument, and book stores 30
+t.test(`Sporting goods, hobby, musical instrument, and book stores` ~ USREC, data = mSales)
+boxplot(mSales$`Sporting goods, hobby, musical instrument, and book stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Sporting goods, hobby, musical instrument, and book stores")
+
+# Warehouse clubs and superstores 31
+t.test(`Warehouse clubs and superstores` ~ USREC, data = mSales)
+boxplot(mSales$`Warehouse clubs and superstores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Warehouse clubs and superstores")
+
+# Women's clothing stores 32
+t.test(`Women's clothing stores` ~ USREC, data = mSales)
+boxplot(mSales$`Women's clothing stores` ~mSales$USREC, xlab="US Recession",
+        ylab="% of Total Sales", main = "Women's clothing stores")
+

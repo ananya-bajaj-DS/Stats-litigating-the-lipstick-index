@@ -1,12 +1,12 @@
 ##Question 3 - code
-
+``` python
 # clean environment
 rm(list = ls())
 # Global toggles 
 
 #toggle for which is baseline model
 b = 1 #(GDP only used as baseline model in final analysis)
-
+```
 # how much of data set to hold back to test prediction
 hold = 0 # (no holdout data used in final analysis)
 
